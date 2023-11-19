@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import ClueBox from "./ClueBox";
 import Icon from "./icons/Icon";
 import { useRouter } from "next/navigation";
-import { changeOrientation, debounce } from "@/constants";
+import { changeOrientation } from "@/constants";
 import useSound from "../_components/useSound";
 const dummyItems = [
   {
@@ -60,6 +60,7 @@ function GameScreen({ id, screen = "screen1", items = dummyItems }) {
     return () => {
       bgMusic.pause();
       bgMusic.currentTime = 0;
+      bgMusic.loop = false;
     };
   }, []);
   const winSound = useSound("win", 0, 1, false);
