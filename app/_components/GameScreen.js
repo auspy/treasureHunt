@@ -5,6 +5,11 @@ import Icon from "./icons/Icon";
 import { useRouter } from "next/navigation";
 import { changeOrientation, debounce } from "@/constants";
 import useSound from "../_components/useSound";
+import { getContract } from "../ethereum";
+import Lock from "../../artifacts/contracts/Lock.sol/Lock.json";
+import { ethers } from "ethers";
+import { parse } from "path";
+
 const dummyItems = [
   {
     name: "skullArt",
@@ -53,8 +58,14 @@ const dummyItems = [
   },
 ];
 
-function GameScreen({ id, screen = "screen1", items = dummyItems }) {
+function GameScreen({
+  id,
+  screen = "screen1",
+  walletAddress,
+  items = dummyItems,
+}) {
   const bgMusic = useSound("bg", 0, 0.05);
+  const [contract, setContract] = useState(null);
   useEffect(() => {
     bgMusic.play();
     return () => {
@@ -62,6 +73,38 @@ function GameScreen({ id, screen = "screen1", items = dummyItems }) {
       bgMusic.currentTime = 0;
     };
   }, []);
+
+  useEffect(() => {
+    async function initContract() {
+      const contract = getContract(
+        "0xfB40daE09C54ec8eB653f8cb140e0569202e3ac2",
+        Lock.abi,
+        0
+      );
+      setContract(contract);
+    }
+    initContract();
+  }, []);
+
+  async function sendETH(walletAddress, amountToSend) {
+    try {
+      if (!contract) return;
+      const tx = await contract.sendEther(walletAddress, amountToSend, {
+        gasLimit: 50000,
+      });
+      const receipt = await tx.wait();
+      const transactionHash = receipt.transactionHash;
+      console.log("Transaction Hash:", transactionHash);
+      if (receipt.status === 1) {
+        console.log("ETH sent successfully!");
+      } else {
+        console.error("Transaction failed");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   const winSound = useSound("win", 0, 1, false);
   const height = 672;
   const router = useRouter();
@@ -76,7 +119,10 @@ function GameScreen({ id, screen = "screen1", items = dummyItems }) {
     if (itemIndex > items.length - 1) {
       setTimeout(() => {
         alert("You won!");
-        router.push(`/games/${id}/result`);
+        const parsedAmount = ethers.parseEther("0.0001");
+        const stringAmount = parsedAmount.toString();
+        sendETH(walletAddress, stringAmount);
+        router.push(`/games/${id}/${walletAddress}/result`);
       }, 3000);
       return;
     }

@@ -6,7 +6,7 @@ const page = () => {
   return (
     <div className="fccc w-full h-full p-20 gap-y-10 max-w-[1000px] self-center">
       <h1 className="">Congratulations! You have won the game!</h1>
-      <h3>Top 3 winners will get ethereum rewards.</h3>
+      <h3>You will get 0.0001 ETH.</h3>
       <button
         className="btnPrimary"
         onClick={() => {
