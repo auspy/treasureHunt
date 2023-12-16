@@ -5,7 +5,9 @@ import useSound from "./useSound";
 import { useEffect } from "react";
 
 const BtnStartGame = () => {
-  const walletAddress = localStorage.getItem("account");
+  const walletAddress =
+    typeof window !== "undefined" ? localStorage.getItem("account") : null;
+
   // const bgMusic = useSound("bg");
   // useEffect(() => {
   //   window.addEventListener("click", () => {
