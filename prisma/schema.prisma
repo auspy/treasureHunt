@@ -13,4 +13,16 @@ model users {
   created_at DateTime @default(now()) @db.Timestamptz(6)
   username   String   @unique
   password   String
+  phone      String?  @db.VarChar(255)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model documents {
+  id         Int      @default(autoincrement()) @db.SmallInt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  cid        String   @unique(map: "Documents_cid_key")
+  type       String?
+  phone      String
+
+  @@id([id, created_at], map: "Documents_pkey")
 }

@@ -1,79 +1,40 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
 
 contract Lock {
-    uint public amount;
-    address payable owner;
-    address payable[] public recepient;
-    address[] public participants;
-    uint256 totalPrize = 0;
-    address payable a;
-    mapping(address => uint256) public recepientToAmount;
-    mapping(address => uint256) public participantToAmount;
+    address public owner;
 
-    event EtherReceived(address indexed sender, uint256 amount);
+    // Event to log successful transfers
+    event EtherSent(
+        address indexed _from,
+        address indexed _to,
+        uint256 _amount
+    );
 
-    // Modifier to restrict access to the owner only
+    // Modifier to ensure only the owner can execute certain functions
     modifier onlyOwner() {
-        require(msg.sender == owner, "Only the owner can call this function");
+        require(msg.sender == owner, "Not the owner");
         _;
     }
 
+    // Constructor to set the contract owner and accept Ether during deployment
     constructor() payable {
-        owner = payable(msg.sender);
-        a = payable(address(this));
+        owner = msg.sender;
     }
 
-    function send() public payable {
-        amount = 100000000000000;
-        a.transfer(amount);
+    // Function to allow the owner to send Ether to a specified address
+    function sendEther(address _receiver, uint256 _amount) external onlyOwner {
+        require(_receiver != address(0), "Invalid receiver address");
+        require(_amount > 0, "Invalid amount");
+
+        // Send Ether to the receiver
+        (bool success, ) = _receiver.call{value: _amount}("");
+        require(success, "Transfer failed");
+
+        // Emit an event to log the successful transfer
+        emit EtherSent(msg.sender, _receiver, _amount);
     }
 
-    function prize() public view returns (uint256) {
-        return totalPrize;
-    }
-
-    function sendETH(address payable receiver, uint _amount) public payable {
-        require(owner == msg.sender, "Only the owner can send funds");
-        require(recepient.length < 3, "You cannot get prize, sorry :( ");
-        amount = _amount % (recepient.length + 1);
-        receiver.transfer(amount);
-        recepient.push(receiver);
-        recepientToAmount[receiver] = _amount;
-    }
-
-    function getRecepientToAmount(
-        address recipient
-    ) external view returns (uint256) {
-        return recepientToAmount[recipient];
-    }
-
-    function getAllRecepientToAmounts()
-        external
-        view
-        returns (address[] memory, uint256[] memory)
-    {
-        uint length = recepient.length;
-        address[] memory recipients = new address[](length);
-        uint256[] memory amounts = new uint256[](length);
-
-        for (uint i = 0; i < length; i++) {
-            recipients[i] = recepient[i];
-            amounts[i] = recepientToAmount[recepient[i]];
-        }
-
-        return (recipients, amounts);
-    }
-
-    // Function to receive Ether
-    receive() external payable {
-        emit EtherReceived(msg.sender, msg.value);
-    }
-
-    // Function that allows the owner to withdraw Ether
-    function withdraw() external onlyOwner {
-        // Transfer the entire contract balance to the owner
-        payable(owner).transfer(address(this).balance);
-    }
+    // Function to allow the contract to receive Ether
+    receive() external payable {}
 }
